@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScySense - Weather Forecast</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#4dabf7', secondary: '#74c0fc' }, borderRadius: { 'none': '0px', 'sm': '4px', DEFAULT: '8px', 'md': '12px', 'lg': '16px', 'xl': '20px', '2xl': '24px', '3xl': '32px', 'full': '9999px', 'button': '8px' } } } }</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <style>
+        :where([class^="ri-"])::before {
+            content: "\f3c2";
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4ebf5 100%);
+        }
+
+        .frost-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        }
+
+        .day-card {
+            min-width: 120px;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .custom-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .custom-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e2e8f0;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.switch-slider {
+            background-color: #4dabf7;
+        }
+
+        input:checked+.switch-slider:before {
+            transform: translateX(30px);
+        }
+
+        .sun-path {
+            height: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sun-arc {
+            width: 100%;
+            height: 200px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            border-top: 2px dashed rgba(255, 193, 7, 0.5);
+            box-sizing: border-box;
+        }
+
+        .sun-position {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: #ffc107;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.7);
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        <!-- Hero Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-['Pacifico'] mb-8 text-gray-800">ScySense</h1>
+            <div class="max-w-md mx-auto relative">
+                <div class="relative">
+                    <input type="text" placeholder="Поиск города..."
+                        class="w-full py-3 px-12 rounded-full border-none shadow-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-700">
+                    <div
+                        class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-500">
+                        <i class="ri-search-line ri-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-center justify-center gap-2 text-gray-600">
+                    <div class="w-5 h-5 flex items-center justify-center">
+                        <i class="ri-map-pin-line"></i>
+                    </div>
+                    <span>Москва</span>
+                    <button class="text-primary hover:underline ml-2 !rounded-button">Определить местоположение</button>
+                </div>
+            </div>
+        </header>
+        <!-- Current Weather Section -->
+        <section class="frost-card rounded-xl p-6 mb-8 shadow-lg">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-center md:text-left mb-6 md:mb-0">
+                    <div class="flex items-center justify-center md:justify-start">
+                        <h2 class="text-6xl font-bold text-gray-800">12°</h2>
+                        <div class="flex items-center ml-4">
+                            <button
+                                class="bg-primary text-white px-3 py-1 rounded-l-full font-medium !rounded-button whitespace-nowrap">°C</button>
+                            <button
+                                class="bg-gray-200 text-gray-700 px-3 py-1 rounded-r-full font-medium !rounded-button whitespace-nowrap">°F</button>
+                        </div>
+                    </div>
+                    <p class="text-xl text-gray-600 mt-2">Облачно с прояснениями</p>
+                    <p class="text-gray-500">Среда, 21 мая 2025 • 14:30</p>
+                </div>
+                <div class="text-center md:text-right">
+                    <div class="w-24 h-24 mx-auto md:mx-0">
+                        <i class="ri-cloudy-line ri-5x text-primary"></i>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p class="text-gray-500">Влажность</p>
+                            <p class="font-semibold">65%</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Ветер</p>
+                            <p class="font-semibold">5 м/с</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Давление</p>
+                            <p class="font-semibold">750 мм рт.ст.</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Ощущается как</p>
+                            <p class="font-semibold">10°</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Hourly Forecast -->
+        <section class="frost-card rounded-xl p-6 mb-8 shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Почасовой прогноз</h3>
+            <div class="overflow-x-auto">
+                <div class="flex space-x-6 pb-4">
+                    <div class="text-center">
+                        <p class="font-medium">Сейчас</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <p class="font-semibold">12°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">15:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <p class="font-semibold">13°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">16:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <p class="font-semibold">14°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">17:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <p class="font-semibold">14°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">18:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-cloudy-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <p class="font-semibold">13°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">19:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <p class="font-semibold">12°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">20:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <p class="font-semibold">11°</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600">21:00</p>
+                        <div class="w-10 h-10 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-moon-cloudy-line ri-2x text-blue-900"></i>
+                        </div>
+                        <p class="font-semibold">10°</p>
+                    </div>
+                </div>
+            </div>
+            <div id="temperature-chart" class="w-full h-64 mt-4"></div>
+        </section>
+        <!-- Weekly Forecast -->
+        <section class="frost-card rounded-xl p-6 mb-8 shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Прогноз на 7 дней</h3>
+            <div class="overflow-x-auto">
+                <div class="flex space-x-4 pb-4">
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Сегодня</p>
+                        <p class="text-sm text-gray-500">21 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">14°</p>
+                            <p class="text-gray-500">8°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Чт</p>
+                        <p class="text-sm text-gray-500">22 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">16°</p>
+                            <p class="text-gray-500">10°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Пт</p>
+                        <p class="text-sm text-gray-500">23 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">18°</p>
+                            <p class="text-gray-500">12°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Сб</p>
+                        <p class="text-sm text-gray-500">24 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-drizzle-line ri-2x text-blue-400"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">15°</p>
+                            <p class="text-gray-500">9°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Вс</p>
+                        <p class="text-sm text-gray-500">25 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-showers-line ri-2x text-blue-500"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">13°</p>
+                            <p class="text-gray-500">7°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Пн</p>
+                        <p class="text-sm text-gray-500">26 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-cloudy-line ri-2x text-primary"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">14°</p>
+                            <p class="text-gray-500">8°</p>
+                        </div>
+                    </div>
+                    <div class="day-card frost-card p-4 rounded-lg text-center">
+                        <p class="font-medium">Вт</p>
+                        <p class="text-sm text-gray-500">27 мая</p>
+                        <div class="w-12 h-12 mx-auto my-2 flex items-center justify-center">
+                            <i class="ri-sun-cloudy-line ri-2x text-yellow-500"></i>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            <p class="font-semibold">16°</p>
+                            <p class="text-gray-500">10°</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Additional Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Sun Info -->
+            <section class="frost-card rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Солнце</h3>
+                <div class="sun-path mb-4">
+                    <div class="sun-arc"></div>
+                    <div class="sun-position" style="left: 65%; top: 50%"></div>
+                </div>
+                <div class="flex justify-between">
+                    <div>
+                        <p class="text-gray-500">Восход</p>
+                        <div class="flex items-center mt-1">
+                            <div class="w-5 h-5 flex items-center justify-center text-yellow-500 mr-1">
+                                <i class="ri-sun-line"></i>
+                            </div>
+                            <p class="font-semibold">05:12</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-500">Закат</p>
+                        <div class="flex items-center justify-end mt-1">
+                            <div class="w-5 h-5 flex items-center justify-center text-orange-500 mr-1">
+                                <i class="ri-moon-line"></i>
+                            </div>
+                            <p class="font-semibold">21:48</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Air Quality -->
+            <section class="frost-card rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Качество воздуха</h3>
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mr-4">
+                        <span class="text-2xl font-bold text-green-600">42</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-green-600">Хорошее</p>
+                        <p class="text-gray-500 text-sm">Идеально для прогулок</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-500">PM2.5</p>
+                        <p class="font-semibold">12 мкг/м³</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">PM10</p>
+                        <p class="font-semibold">24 мкг/м³</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">NO₂</p>
+                        <p class="font-semibold">18 мкг/м³</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">O₃</p>
+                        <p class="font-semibold">68 мкг/м³</p>
+                    </div>
+                </div>
+            </section>
+            <!-- UV Index -->
+            <section class="frost-card rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">УФ-индекс</h3>
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mr-4">
+                        <span class="text-2xl font-bold text-yellow-600">5</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-yellow-600">Умеренный</p>
+                        <p class="text-gray-500 text-sm">Рекомендуется защита</p>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 45%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>0</span>
+                    <span>3</span>
+                    <span>6</span>
+                    <span>8</span>
+                    <span>11+</span>
+                </div>
+            </section>
+            <!-- Precipitation -->
+            <section class="frost-card rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Вероятность осадков</h3>
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                        <span class="text-2xl font-bold text-blue-600">30%</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-blue-600">Низкая</p>
+                        <p class="text-gray-500 text-sm">Возможен небольшой дождь</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-4 gap-2 text-center">
+                    <div>
+                        <p class="text-gray-500 text-sm">Утро</p>
+                        <div class="w-8 h-8 mx-auto my-1 flex items-center justify-center text-blue-500">
+                            <i class="ri-drizzle-line ri-lg"></i>
+                        </div>
+                        <p class="font-semibold">20%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">День</p>
+                        <div class="w-8 h-8 mx-auto my-1 flex items-center justify-center text-blue-500">
+                            <i class="ri-cloudy-line ri-lg"></i>
+                        </div>
+                        <p class="font-semibold">10%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Вечер</p>
+                        <div class="w-8 h-8 mx-auto my-1 flex items-center justify-center text-blue-500">
+                            <i class="ri-drizzle-line ri-lg"></i>
+                        </div>
+                        <p class="font-semibold">30%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Ночь</p>
+                        <div class="w-8 h-8 mx-auto my-1 flex items-center justify-center text-blue-500">
+                            <i class="ri-showers-line ri-lg"></i>
+                        </div>
+                        <p class="font-semibold">40%</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- Footer -->
+        <footer class="mt-auto pt-8 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">О сервисе</h4>
+                    <p class="text-gray-600">Наш сервис предоставляет точные данные о погоде в режиме реального времени.
+                        Мы используем передовые технологии для прогнозирования погодных условий.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Источники данных</h4>
+                    <p class="text-gray-600">Мы используем данные от ведущих метеорологических служб, включая
+                        Гидрометцентр России, OpenWeatherMap и Weather API.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Скачать приложение</h4>
+                    <div class="flex space-x-4">
+                        <button
+                            class="bg-black text-white px-4 py-2 rounded-lg flex items-center !rounded-button whitespace-nowrap">
+                            <div class="w-6 h-6 flex items-center justify-center mr-2">
+                                <i class="ri-apple-fill"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-xs">Скачать в</p>
+                                <p class="font-semibold">App Store</p>
+                            </div>
+                        </button>
+                        <button
+                            class="bg-black text-white px-4 py-2 rounded-lg flex items-center !rounded-button whitespace-nowrap">
+                            <div class="w-6 h-6 flex items-center justify-center mr-2">
+                                <i class="ri-google-play-fill"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-xs">Доступно в</p>
+                                <p class="font-semibold">Google Play</p>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex space-x-4">
+                        <a href="#"
+                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                            <i class="ri-telegram-fill"></i>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                            <i class="ri-vk-fill"></i>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                            <i class="ri-instagram-fill"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center text-gray-500">
+                <p>© 2025 ScySense. Все права защищены.</p>
+            </div>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Temperature Chart
+            const chartDom = document.getElementById('temperature-chart');
+            const myChart = echarts.init(chartDom);
+            const option = {
+                animation: false,
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#e2e8f0',
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                grid: {
+                    left: '0',
+                    right: '0',
+                    top: '10',
+                    bottom: '0',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#6b7280'
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: {
+                        show: false
+                    },
+                    axisLabel: {
+                        color: '#6b7280'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#e2e8f0'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: 'Температура',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: {
+                            width: 3,
+                            color: 'rgba(87, 181, 231, 1)'
+                        },
+                        symbol: 'none',
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                {
+                                    offset: 0,
+                                    color: 'rgba(87, 181, 231, 0.3)'
+                                },
+                                {
+                                    offset: 1,
+                                    color: 'rgba(87, 181, 231, 0.1)'
+                                }
+                            ])
+                        },
+                        data: [12, 13, 14, 14, 13, 12, 11, 10, 9, 8, 7]
+                    }
+                ]
+            };
+            myChart.setOption(option);
+            // Responsive chart
+            window.addEventListener('resize', function () {
+                myChart.resize();
+            });
+            // Toggle temperature unit
+            const celsiusBtn = document.querySelector('.rounded-l-full');
+            const fahrenheitBtn = document.querySelector('.rounded-r-full');
+            celsiusBtn.addEventListener('click', function () {
+                celsiusBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                celsiusBtn.classList.add('bg-primary', 'text-white');
+                fahrenheitBtn.classList.remove('bg-primary', 'text-white');
+                fahrenheitBtn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            fahrenheitBtn.addEventListener('click', function () {
+                fahrenheitBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                fahrenheitBtn.classList.add('bg-primary', 'text-white');
+                celsiusBtn.classList.remove('bg-primary', 'text-white');
+                celsiusBtn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            // Geolocation button
+            const geoButton = document.querySelector('button.text-primary');
+            geoButton.addEventListener('click', function () {
+                if (navigator.geolocation) {
+                    geoButton.textContent = 'Определение...';
+                    setTimeout(() => {
+                        geoButton.textContent = 'Определить местоположение';
+                    }, 2000);
+                }
+            });
+            // Search functionality
+            const searchInput = document.querySelector('input[type="text"]');
+            searchInput.addEventListener('focus', function () {
+                this.classList.add('ring-2', 'ring-primary');
+            });
+            searchInput.addEventListener('blur', function () {
+                this.classList.remove('ring-2', 'ring-primary');
+            });
+        });
+    </script>
+</body>
+
+</html>
